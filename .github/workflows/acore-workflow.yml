@@ -55,6 +55,9 @@ jobs:
         echo "containerfile-scan job"
 
   push-test:
+    if: |
+      (github.event_name == 'pull_request' && github.base_ref == 'main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref_name != 'main')
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -63,6 +66,7 @@ jobs:
         echo "containerfile-scan job"
 
   check-pr-level:
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -71,6 +75,7 @@ jobs:
         echo "containerfile-scan job"
 
   determine-version:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -79,6 +84,7 @@ jobs:
         echo "containerfile-scan job"
         
   push-prod:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -87,6 +93,7 @@ jobs:
         echo "containerfile-scan job"
 
   bump-version :
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -95,6 +102,7 @@ jobs:
         echo "containerfile-scan job"
 
   determine-version-dispatch:
+    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -103,6 +111,7 @@ jobs:
         echo "containerfile-scan job"
         
   push-prod-dispatch:
+    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -111,6 +120,7 @@ jobs:
         echo "containerfile-scan job"
 
   bump-version-dispatch:
+    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
