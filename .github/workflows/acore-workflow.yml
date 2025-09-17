@@ -29,3 +29,95 @@ jobs:
     - name: build app
       run: |
         echo "build job"
+
+  containerfile-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+
+  image-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+
+  push-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+
+  check-pr-level:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+
+  determine-version:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+        
+  push-prod:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+
+  bump-version :
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+
+  determine-version-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+        
+  push-prod-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+
+  bump-version-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
+
+
+        
+        
