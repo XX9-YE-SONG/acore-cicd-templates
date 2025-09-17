@@ -1,0 +1,28 @@
+name: A-core workflow
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: false
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: linter
+      run: |
+        echo "linter job"
+
+  build-app:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: build app
+      run: |
+        echo "build job"
