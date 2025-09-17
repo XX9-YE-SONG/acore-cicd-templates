@@ -6,6 +6,9 @@ on:
       app-name:
         required: true
         type: string
+      version-type:
+        required: true
+        type: string
     secrets:
       token:
         required: false
