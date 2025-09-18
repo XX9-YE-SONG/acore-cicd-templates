@@ -72,7 +72,7 @@ jobs:
       run: |
         echo "containerfile-scan job"
 
-  check-pr-level:
+  check-pr-label:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
     runs-on: ubuntu-latest
     steps:
