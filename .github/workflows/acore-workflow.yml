@@ -52,6 +52,7 @@ jobs:
 
   test:
     if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
+    needs: [build-app]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -91,7 +92,7 @@ jobs:
         
   push-prod:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [image-scan, determine-version, test]
+    needs: [linter, build-app, containerfile-scan, image-scan, test, determine-version]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -120,7 +121,7 @@ jobs:
         
   push-prod-dispatch:
     if: github.event_name == 'workflow_dispatch' && github.ref_name == 'main'
-    needs: [image-scan, determine-version-dispatch, test]
+    needs: [linter, build-app, containerfile-scan, image-scan, test, determine-version-dispatch]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
