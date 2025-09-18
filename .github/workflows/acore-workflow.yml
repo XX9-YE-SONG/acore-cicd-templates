@@ -85,10 +85,22 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
-    - name: containerfile-scan
-      run: |
-        echo "containerfile-scan job"
+      - name: Get PR Labels and Count Version Labels
+        id: count-labels
+        run: |
+          VERSION_LABELS_COUNT=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH" | grep -E '^(major|minor|patch)$' | wc -l)
+          echo "Found $VERSION_LABELS_COUNT version labels ('major', 'minor', 'patch', 'none')."
+          if [ "$VERSION_LABELS_COUNT" -eq 1 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT 
+          fi
+      - name: Fail if incorrect number of version labels
+        if: steps.count-labels.outputs.status == 'failure'
+        run: |
+          echo "Error: Pull request must have exactly one of the following labels: 'major', 'minor', 'patch' or 'none'."
+          echo "Please ensure only one of these labels is applied to the pull request."
+          exit 1
         
   push-prod:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
