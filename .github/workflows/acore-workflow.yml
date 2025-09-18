@@ -15,6 +15,7 @@ on:
 
 jobs:
   linter:
+    if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -23,6 +24,7 @@ jobs:
         echo "linter job"
 
   build-app:
+    if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -31,6 +33,7 @@ jobs:
         echo "build job"
 
   containerfile-scan:
+    if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -39,6 +42,7 @@ jobs:
         echo "containerfile-scan job"
 
   image-scan:
+    if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -47,6 +51,7 @@ jobs:
         echo "containerfile-scan job"
 
   test:
+    if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
