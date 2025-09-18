@@ -89,10 +89,19 @@ jobs:
     - name: containerfile-scan
       run: |
         echo "containerfile-scan job"
+
+  determine-version-dispatch:
+    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+    - name: containerfile-scan
+      run: |
+        echo "containerfile-scan job"
         
   push-prod:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [linter, build-app, containerfile-scan, image-scan, test, determine-version]
+    needs: [linter, build-app, containerfile-scan, image-scan, test, determine-version, determine-version-dispatch]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -110,34 +119,9 @@ jobs:
       run: |
         echo "containerfile-scan job"
 
-  determine-version-dispatch:
-    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'main'
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v5
-    - name: containerfile-scan
-      run: |
-        echo "containerfile-scan job"
-        
-  push-prod-dispatch:
-    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'main'
-    needs: [linter, build-app, containerfile-scan, image-scan, test, determine-version-dispatch]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v5
-    - name: containerfile-scan
-      run: |
-        echo "containerfile-scan job"
 
-  bump-version-dispatch:
-    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'main'
-    needs: [push-prod-dispatch]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v5
-    - name: containerfile-scan
-      run: |
-        echo "containerfile-scan job"
+        
+
 
 
         
