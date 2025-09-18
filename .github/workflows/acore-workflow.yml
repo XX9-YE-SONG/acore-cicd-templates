@@ -96,15 +96,21 @@ jobs:
           echo "Please ensure only one of these labels is applied to the pull request."
           exit 1
         
-
   determine-version:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: containerfile-scan
+      - name: Run on Push Event
+        if: github.event_name == 'push'
         run: |
-          echo "containerfile-scan job"
+          echo "This step runs only when the workflow is triggered by a 'push' event."
+          echo "The branch pushed was: ${{ github.ref }}"
+      - name: Run on Workflow Dispatch Event
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "This step runs only when the workflow is triggered by a 'workflow_dispatch' (manual) event."
+          echo "You manually triggered this workflow!"
         
   push-prod:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
