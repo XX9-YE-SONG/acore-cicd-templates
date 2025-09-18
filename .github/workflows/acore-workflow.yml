@@ -145,6 +145,7 @@ jobs:
             patch)
               PATCH=$((PATCH + 1))
               ;;
+          esac
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
           echo "Bumped version: $NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
