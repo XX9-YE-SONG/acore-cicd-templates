@@ -79,9 +79,11 @@ jobs:
       - name: Get PR Labels and Count Version Labels
         id: count-labels
         run: |
-          VERSION_LABELS_COUNT=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH" | grep -E '^(major|minor|patch)$' | wc -l)
+          VERSION_LABELS_COUNT=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH" | grep -E '^(major|minor|patch|none)$' | wc -l)
           echo "Found $VERSION_LABELS_COUNT version labels ('major', 'minor', 'patch', 'none')."
           if [ "$VERSION_LABELS_COUNT" -eq 1 ]; then
+            FOUND_LABEL="${VERSION_LABELS[0]}"
+            echo "Exactly one version label found: '$FOUND_LABEL'"
             echo "status=success" >> $GITHUB_OUTPUT
           else
             echo "status=failure" >> $GITHUB_OUTPUT 
