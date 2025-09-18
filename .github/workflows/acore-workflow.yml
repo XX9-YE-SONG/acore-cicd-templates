@@ -99,13 +99,56 @@ jobs:
   determine-version:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
     steps:
       - uses: actions/checkout@v5
       - name: Run on Push Event
         if: github.event_name == 'push'
         run: |
           echo "This step runs only when the workflow is triggered by a 'push' event."
-          echo "The branch pushed was: ${{ github.ref }}"
+          MERGE_COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+          echo "Merge Commit Message: $MERGE_COMMIT_MESSAGE"
+          PR_ID=$(echo "$MERGE_COMMIT_MESSAGE" | grep -oP 'Merge pull request #\K\d+' || true)
+          if [ -z "$PR_ID" ]; then
+            echo "::error::Could not find a Pull Request ID in the merge commit message. This job requires a PR ID to proceed."
+            exit 1
+          fi
+          echo "Extracted Pull Request ID: $PR_ID"
+          ALL_PR_LABELS=$(gh pr view "$PR_ID" --json labels -q '.labels[].name')
+          readarray -t VERSION_LABELS <<< "$(echo "$ALL_PR_LABELS" | grep -E '^(major|minor|patch|none)$')"
+          FOUND_LABEL="${VERSION_LABELS[0]}"
+          echo "pr_version_label=$FOUND_LABEL" >> $GITHUB_OUTPUT
+          if [ "$FOUND_LABEL" == "none" ]; then
+            echo "PR has 'none' label. No version bump required. Ending step gracefully."
+            exit 0 
+          fi
+          echo "PR version label is: $FOUND_LABEL"
+          LATEST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v0.0.0"
+          fi
+          echo "The latest tag is: $LATEST_TAG"
+          CURRENT_VERSION=${LATEST_TAG#v}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+          echo "Current version components: Major=$MAJOR, Minor=$MINOR, Patch=$PATCH"
+          case "$FOUND_LABEL" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          echo "Bumped version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          
       - name: Run on Workflow Dispatch Event
         if: github.event_name == 'workflow_dispatch'
         run: |
