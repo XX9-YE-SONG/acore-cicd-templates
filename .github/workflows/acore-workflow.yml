@@ -79,15 +79,15 @@ jobs:
       - name: Get PR Labels and Count Version Labels
         id: count-labels
         run: |
-          readarray -t VERSION_LABELS <<< "$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH" | grep -E '^(major|minor|patch|none)$')"
-          VERSION_LABELS_COUNT=${#VERSION_LABELS[@]}
-          echo "Found $VERSION_LABELS_COUNT version labels ('major', 'minor', 'patch', 'none')."
-          if [ "$VERSION_LABELS_COUNT" -eq 1 ]; then
-            FOUND_LABEL="${VERSION_LABELS[0]}"
+          VALID_LABELS=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH" | grep -E '^(major|minor|patch|none)$')
+          LABEL_COUNT=$(echo "$VALID_LABELS" | grep -c .)
+          echo "Found $LABEL_COUNT version labels ('major', 'minor', 'patch', 'none')."
+          if [ "$LABEL_COUNT" -eq 1 ]; then
+            FOUND_LABEL="$VALID_LABELS"
             echo "Exactly one version label found: '$FOUND_LABEL'"
             echo "status=success" >> $GITHUB_OUTPUT
           else
-            echo "status=failure" >> $GITHUB_OUTPUT 
+            echo "status=failure" >> $GITHUB_OUTPUT
           fi
       - name: Fail if incorrect number of version labels
         if: steps.count-labels.outputs.status == 'failure'
