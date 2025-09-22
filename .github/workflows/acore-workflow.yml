@@ -108,14 +108,13 @@ jobs:
         run: |
           echo "This step runs only when the workflow is triggered by a 'push' event."
           
-          LATEST_TAG=$(git tag --points-at HEAD | grep -E 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n 1)
-          if [ -n "$LATEST_TAG" ]; then
-            echo "A version tag was pushed: $LATEST_TAG"
-            echo "new_version=$LATEST_TAG" >> $GITHUB_OUTPUT
+          LATEST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "No existing version tag found. Initializing to v0.1.0."
+            echo "new_version=v0.1.0" >> $GITHUB_OUTPUT
             exit 0
           fi
-
-          # Fallback to PR ID logic
+          
           MERGE_COMMIT_MESSAGE=$(git log -1 --pretty=%B)
           echo "Merge Commit Message: $MERGE_COMMIT_MESSAGE"
           
@@ -129,13 +128,6 @@ jobs:
           ALL_PR_LABELS=$(gh pr view "$PR_ID" --json labels -q '.labels[].name')
           VALID_LABELS=$(echo "$ALL_PR_LABELS" | grep -E '^(major|minor|patch|none)$')
           FOUND_LABEL="$VALID_LABELS"
-
-          LATEST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
-          if [ -z "$LATEST_TAG" ]; then
-            echo "No existing version tag found. Initializing to v0.1.0."
-            echo "new_version=v0.1.0" >> $GITHUB_OUTPUT
-            exit 0
-          fi
 
           if [ "$FOUND_LABEL" == "none" ]; then
             echo "PR has 'none' label. No version bump required. Ending step gracefully."
@@ -173,7 +165,6 @@ jobs:
           BUMP_TYPE="${{ inputs.bump-type }}"
           echo "bump_type input is: $BUMP_TYPE"
 
-          # Prioritize tag check: Is HEAD a version tag?
           HEAD_TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
           if [ -n "$HEAD_TAG" ]; then
             echo "A version tag is already present on HEAD: $HEAD_TAG"
@@ -237,7 +228,7 @@ jobs:
 
   bump-version :
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
-    needs: [push-prod]
+    needs: [determine-version, push-prod]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
