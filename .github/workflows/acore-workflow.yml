@@ -215,9 +215,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: containerfile-scan
+
+      - name: Tag new version if needed
+        env:
+          NEW_VERSION: ${{ needs.determine-version.outputs.new_version }}
         run: |
-          echo "containerfile-scan job"
+          echo "NEW_VERSION=$NEW_VERSION"
+          if [ "$NEW_VERSION" = "none" ] || [ -z "$NEW_VERSION" ]; then
+            echo "No new version to tag. Skipping git tag."
+            exit 0
+          fi
+          echo "Tagging new version: $NEW_VERSION"
+          git tag "$NEW_VERSION"
+          git push origin "$NEW_VERSION"
 
 
       
