@@ -198,6 +198,16 @@ jobs:
       - name: containerfile-scan
         run: |
           echo "containerfile-scan job"
+      - env:
+          COMMIT_SHA: ${{ github.sha }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+          WORKFLOW_RUN_NUMBER: ${{ github.run_number }}
+          NEW_VERSION: ${{ needs.determine-version.outputs.new_version }}
+        run: |
+          echo "COMMIT_SHA=$COMMIT_SHA"
+          echo "WORKFLOW_RUN_ID=$WORKFLOW_RUN_ID"
+          echo "WORKFLOW_RUN_NUMBER=$WORKFLOW_RUN_NUMBER"
+          echo "NEW_VERSION=$NEW_VERSION"          
 
   bump-version :
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
