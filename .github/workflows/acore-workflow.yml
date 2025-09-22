@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v5
       - name: containerfile-scan
         run: |
-          echo "containerfile-scan job"
+          echo "dummy"
 
   image-scan:
     if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
@@ -46,9 +46,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: containerfile-scan
+      - name: image-scan
         run: |
-          echo "containerfile-scan job"
+          echo "dummy"
 
   test:
     if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
@@ -150,6 +150,7 @@ jobs:
               ;;
           esac
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          echo "new_version=$NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Run on Workflow Dispatch Event
@@ -193,6 +194,7 @@ jobs:
               ;;
           esac
           NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          echo "new_version=$NEW_VERSION"
           echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
         
   push-prod:
