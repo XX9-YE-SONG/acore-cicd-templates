@@ -6,7 +6,7 @@ on:
       app-name:
         required: true
         type: string
-      version-type:
+      bump-type:
         required: true
         type: string
     secrets:
