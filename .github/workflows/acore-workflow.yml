@@ -88,6 +88,7 @@ jobs:
             echo "status=success" >> $GITHUB_OUTPUT
           else
             echo "status=failure" >> $GITHUB_OUTPUT
+          fi
       - name: Fail if incorrect number of version labels
         if: steps.count-labels.outputs.status == 'failure'
         run: |
@@ -111,6 +112,7 @@ jobs:
         run: |
           echo "This step runs only when the workflow is triggered by a 'push' event."
           # Prioritize LATEST_TAG check
+          git fetch --tags --force
           LATEST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
           if [ -z "$LATEST_TAG" ]; then
             echo "No existing version tag found. Initializing to v0.1.0."
@@ -156,6 +158,7 @@ jobs:
         run: |
           echo "This step runs only when the workflow is triggered by a 'workflow_dispatch' (manual) event."
           BUMP_TYPE="${{ inputs.bump-type }}"
+          git fetch --tags --force
           HEAD_TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
           if [ -n "$HEAD_TAG" ]; then
             echo "A version tag is already present on HEAD: $HEAD_TAG"
