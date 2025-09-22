@@ -172,12 +172,21 @@ jobs:
           echo "This step runs only when the workflow is triggered by a 'workflow_dispatch' (manual) event."
           BUMP_TYPE="${{ inputs.bump-type }}"
           echo "bump_type input is: $BUMP_TYPE"
+
+          # Prioritize tag check: Is HEAD a version tag?
+          HEAD_TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1)
+          if [ -n "$HEAD_TAG" ]; then
+            echo "A version tag is already present on HEAD: $HEAD_TAG"
+            echo "new_version=$HEAD_TAG" >> $GITHUB_OUTPUT
+            exit 0
+          fi
           
           if [ "$BUMP_TYPE" == "none" ]; then
             echo "Input bump-type is 'none'. No version bump required. Ending step gracefully."
             echo "new_version=none" >> $GITHUB_OUTPUT
             exit 0
           fi
+
           LATEST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
           if [ -z "$LATEST_TAG" ]; then
             echo "No existing version tag found. Initializing to v0.1.0."
