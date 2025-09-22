@@ -155,7 +155,39 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: |
           echo "This step runs only when the workflow is triggered by a 'workflow_dispatch' (manual) event."
-          echo "You manually triggered this workflow!"
+          BUMP_TYPE="${{ inputs.bump-type }}"
+          echo "bump_type input is: $BUMP_TYPE"
+          
+          if [ "$BUMP_TYPE" == "none" ]; then
+            echo "Input bump-type is 'none'. No version bump required. Ending step gracefully."
+            echo "new_version=none" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          LATEST_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v0.0.0"
+          fi
+          echo "The latest tag is: $LATEST_TAG"
+          CURRENT_VERSION=${LATEST_TAG#v}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+          echo "Current version components: Major=$MAJOR, Minor=$MINOR, Patch=$PATCH"
+          case "$BUMP_TYPE" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
+          NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
+          echo "Bumped version: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
         
   push-prod:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
