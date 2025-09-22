@@ -222,6 +222,7 @@ jobs:
       - name: Tag new version if needed
         env:
           NEW_VERSION: ${{ needs.determine-version.outputs.new_version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "NEW_VERSION=$NEW_VERSION"
           if [ "$NEW_VERSION" = "none" ] || [ -z "$NEW_VERSION" ]; then
