@@ -16,7 +16,7 @@ on:
 jobs:
   linter:
     if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
-    runs-on: ubuntu-latest
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v5
       - name: linter
@@ -24,7 +24,7 @@ jobs:
           echo "linter job"
 
   build-app:
-    runs-on: ubuntu-latest
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v5
       - name: build app
@@ -33,7 +33,7 @@ jobs:
 
   containerfile-scan:
     if:  github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
-    runs-on: ubuntu-latest
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v5
       - name: containerfile-scan
@@ -65,7 +65,7 @@ jobs:
       (github.event_name == 'pull_request' && github.base_ref == 'main') ||
       (github.event_name == 'workflow_dispatch' && github.ref_name != 'main')
     needs: [build-app]
-    runs-on: ubuntu-latest
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v5
       - name: containerfile-scan
@@ -74,7 +74,7 @@ jobs:
 
   check-pr-label:
     if: github.event_name == 'pull_request' && github.base_ref == 'main'
-    runs-on: ubuntu-latest
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Get PR Labels and Count Version Labels
         id: count-labels
@@ -98,7 +98,7 @@ jobs:
         
   determine-version:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
     outputs:
       new_version: ${{ steps.determine-push.outputs.new_version || steps.determine-dispatch.outputs.new_version }}
     env:
@@ -200,7 +200,7 @@ jobs:
   push-prod:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [linter, build-app, containerfile-scan, image-scan, test, determine-version]
-    runs-on: ubuntu-latest
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v5
       - name: containerfile-scan
@@ -220,7 +220,7 @@ jobs:
   bump-version:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     needs: [determine-version, push-prod]
-    runs-on: ubuntu-latest
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v5
 
