@@ -118,7 +118,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Tag new version if needed
-        uses: ./.github/actions/bump-version
+        uses: XX9-YE-SONG/acore-cicd-templates/.github/actions/bump-version
         with:
           new_version: ${{ needs.determine-version.outputs.new_version }}
           token: ${{ secrets.GITHUB_TOKEN }}
