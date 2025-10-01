@@ -157,8 +157,8 @@ jobs:
 
       - name: Pull and run container with Podman
         env:
-          IMAGE_NAME: ${{ needs.build_and_scan.outputs.image_name }}
-          VERSION: ${{ env.VERSION }}
+          IMAGE_NAME: ${{ needs.build-and-scan.outputs.image_name }}
+          VERSION: v0.1.0
         run: |
           # Pull the image
           podman pull "${IMAGE_NAME}:${VERSION}"
