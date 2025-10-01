@@ -1,0 +1,124 @@
+name: A-core app workflow
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        required: true
+        type: string
+      bump-type:
+        required: true
+        type: string
+    secrets:
+      token:
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  linter:
+    if: github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: echo "linter job"
+
+  build-app:
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: echo "build job"
+
+  containerfile-scan:
+    if: github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: echo "dummy"
+
+  image-scan:
+    if: github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
+    needs: [build-app, containerfile-scan]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: echo "dummy"
+
+  test:
+    if: github.event_name != 'workflow_dispatch' || github.ref_name == 'main'
+    needs: [build-app]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: echo "containerfile-scan job"
+
+  push-test:
+    if: |
+      (github.event_name == 'pull_request' && github.base_ref == 'main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref_name != 'main')
+    needs: [build-app]
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: echo "containerfile-scan job"
+
+  check-pr-label:
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check PR label
+        id: check
+        uses: ./.github/actions/check-pr-label
+      - name: Fail if incorrect label count
+        if: steps.check.outputs.status == 'failure'
+        run: |
+          echo "Error: Pull request must have exactly one of: major, minor, patch, none."
+          exit 1
+
+  determine-version:
+    if: github.ref == 'refs/heads/main'
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
+    outputs:
+      new_version: ${{ steps.det.outputs.new_version }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Determine version
+        id: det
+        uses: ./.github/actions/determine-version
+        with:
+          bump-type: ${{ inputs.bump-type }}
+
+  push-prod:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    needs: [linter, build-app, containerfile-scan, image-scan, test, determine-version]
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: echo "containerfile-scan job"
+      - env:
+          COMMIT_SHA: ${{ github.sha }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+          WORKFLOW_RUN_NUMBER: ${{ github.run_number }}
+          NEW_VERSION: ${{ needs.determine-version.outputs.new_version }}
+        run: |
+          echo "COMMIT_SHA=$COMMIT_SHA"
+          echo "WORKFLOW_RUN_ID=$WORKFLOW_RUN_ID"
+          echo "WORKFLOW_RUN_NUMBER=$WORKFLOW_RUN_NUMBER"
+          echo "NEW_VERSION=$NEW_VERSION"
+
+  bump-version:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    needs: [determine-version, push-prod]
+    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Tag new version if needed
+        uses: ./.github/actions/bump-version
+        with:
+          new_version: ${{ needs.determine-version.outputs.new_version }}
+          token: ${{ secrets.GITHUB_TOKEN }}
