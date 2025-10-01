@@ -37,11 +37,13 @@ jobs:
         with:
           bump-type: ${{ inputs.bump-type }}
           
-  build-and-scan:
+  build-and-scan-prod:
+    name: Build and scan
+    needs: [determine-version]
+    if: github.ref == 'refs/heads/main'
     env:
       REGISTRY: ghcr.io
       IMAGE_REPO: ${{ github.repository_owner }}/acore-sdk-test
-    name: Build and scan
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -99,13 +101,14 @@ jobs:
           path: ./image.tar
           retention-days: 1
 
-  push-image:    
+  push-image-prod: 
+    if: github.ref == 'refs/heads/main'
     env:
       REGISTRY: ghcr.io
       IMAGE_REPO: ${{ github.repository_owner }}/acore-sdk-test
     name: Push image to GHCR
     runs-on: ubuntu-24.04
-    needs: build-and-scan
+    needs: [build-and-scan-prod]
     permissions:
       contents: read
       packages: write
