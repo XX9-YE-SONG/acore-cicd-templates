@@ -10,16 +10,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Configure auth
+    - name: Tag new version if needed
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.token }}
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-    - name: Tag new version if needed
-      shell: bash
       run: |
         echo "NEW_VERSION=${{ inputs.new_version }}"
         if [ "${{ inputs.new_version }}" = "none" ] || [ -z "${{ inputs.new_version }}" ]; then
@@ -27,6 +21,8 @@ runs:
           exit 0
         fi
 
+        git fetch --tags --force
+        
         # Avoid failing if tag already exists
         if git rev-parse -q --verify "refs/tags/${{ inputs.new_version }}" >/dev/null; then
           echo "Tag ${{ inputs.new_version }} already exists. Skipping push."
@@ -35,3 +31,4 @@ runs:
 
         git tag "${{ inputs.new_version }}"
         git push origin "${{ inputs.new_version }}"
+        echo "Pushed tag ${V} successfully."
