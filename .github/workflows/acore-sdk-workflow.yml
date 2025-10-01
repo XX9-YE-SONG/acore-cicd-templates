@@ -10,10 +10,6 @@ on:
       token:
         required: false
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_REPO: ${{ github.repository_owner }}/acore-sdk-test
-  IMAGE_REPO_PROD: ${{ github.repository_owner }}/acore-sdk-prod
 
 jobs:
   build-and-scan:
