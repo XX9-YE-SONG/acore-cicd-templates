@@ -24,7 +24,7 @@ jobs:
 
   determine-version:
     if: github.ref == 'refs/heads/main'
-    runs-on: codebuild-test-github-${{ github.run_id }}-${{ github.run_attempt }}
+    runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.det.outputs.new_version }}
     env:
