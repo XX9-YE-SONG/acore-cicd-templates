@@ -60,7 +60,7 @@ jobs:
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=oci,dest=./image.tar
+          outputs: type=docker,dest=./image.tar
 
       - name: Trivy scan (image tar)
         uses: aquasecurity/trivy-action@0.28.0
@@ -78,7 +78,7 @@ jobs:
           path: ./image.tar
           retention-days: 1
 
-  push_image:    
+  push-image:    
     env:
       REGISTRY: ghcr.io
       IMAGE_REPO: ${{ github.repository_owner }}/acore-sdk-test
@@ -132,3 +132,48 @@ jobs:
             echo "Pushing $tag"
             docker push "$tag"
           done
+
+
+  run_with_podman:
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_REPO: ${{ github.repository_owner }}/acore-sdk-test
+    name: Run container with Podman
+    runs-on: ubuntu-latest
+    needs: [build-and-scan, push-image]
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Login to GHCR with Podman
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Pull and run container with Podman
+        env:
+          IMAGE_NAME: ${{ needs.build_and_scan.outputs.image_name }}
+          VERSION: ${{ env.VERSION }}
+        run: |
+          # Pull the image
+          podman pull "${IMAGE_NAME}:${VERSION}"
+          
+          # Run the container (example: just show version info)
+          echo "Running container with Podman..."
+          podman run --rm "${IMAGE_NAME}:${VERSION}" gcc --version
+          podman run --rm "${IMAGE_NAME}:${VERSION}" cmake --version
+          
+          # You can add more commands here as needed
+          # For example, if you want to run it interactively or with specific commands:
+          # podman run --rm -it "${IMAGE_NAME}:${VERSION}" /bin/bash
+
+      - name: Clean up Podman
+        if: always()
+        run: |
+          podman system prune -f
+          podman logout ${{ env.REGISTRY }}
