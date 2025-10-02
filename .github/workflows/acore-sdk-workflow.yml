@@ -36,7 +36,7 @@ jobs:
         uses: XX9-YE-SONG/acore-cicd-templates/.github/actions/determine-version@main
         with:
           bump-type: ${{ inputs.bump-type }}
-          
+
   build-and-scan-prod:
     name: Build and scan
     needs: [determine-version]
@@ -50,15 +50,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
-        
+
+      - name: Setup Podman
+        uses: redhat-actions/setup-podman@v2
+
       - name: Compute full image name (lowercase)
         id: name
+        shell: bash
         run: |
           IMAGE_NAME="${{ env.REGISTRY }}/$(echo "${{ env.IMAGE_REPO }}" | tr '[:upper:]' '[:lower:]')"
           echo "image=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
@@ -71,19 +69,28 @@ jobs:
           tags: |
             type=sha
             type=raw,value=latest
-            type=ref,event=tag
+            type=raw,value=${{ needs.determine-version.outputs.new_version }}
           labels: |
-            org.opencontainers.image.version=v0.1.0
+            org.opencontainers.image.version=${{ needs.determine-version.outputs.new_version }}
 
-      - name: Build image to OCI tar (no push)
-        uses: docker/build-push-action@v6
+      - name: Build image with Buildah
+        id: build
+        uses: redhat-actions/buildah-build@v2
         with:
           context: .
-          file: ./Containerfile
-          platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.tags }}
+          containerfiles: |
+            ./Containerfile
+          image: ${{ steps.name.outputs.image }}
+          # build a single local tag; we'll retag and push later
+          tags: |
+            build
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=docker,dest=./image.tar
+          oci: true
+
+      - name: Save image to docker-archive (for Trivy)
+        shell: bash
+        run: |
+          podman image save --format docker-archive -o ./image.tar "${{ steps.name.outputs.image }}:build"
 
       - name: Trivy scan (image tar)
         uses: aquasecurity/trivy-action@0.28.0
@@ -101,7 +108,7 @@ jobs:
           path: ./image.tar
           retention-days: 1
 
-  push-image-prod: 
+  push-image-prod:
     if: github.ref == 'refs/heads/main'
     env:
       REGISTRY: ghcr.io
@@ -112,8 +119,10 @@ jobs:
     permissions:
       contents: read
       packages: write
-
     steps:
+      - name: Setup Podman
+        uses: redhat-actions/setup-podman@v2
+
       - name: Download image artifact
         uses: actions/download-artifact@v4
         with:
@@ -137,26 +146,32 @@ jobs:
             type=raw,value=latest
             type=ref,event=tag
 
-      - name: Docker login to GHCR
-        uses: docker/login-action@v3
+      - name: Podman login to GHCR
+        uses: redhat-actions/podman-login@v1
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Load image from tar
-        run: docker load -i image.tar
+        shell: bash
+        run: |
+          podman load -i image.tar
 
       - name: Push all tags
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
         shell: bash
         run: |
+          set -euo pipefail
+          IMAGE="${{ steps.name.outputs.image }}"
+          LOCAL_TAG="${IMAGE}:build"
           echo "$TAGS" | while IFS= read -r tag; do
-            echo "Pushing $tag"
-            docker push "$tag"
+            [ -z "$tag" ] && continue
+            echo "Tagging and pushing $tag"
+            podman tag "$LOCAL_TAG" "$tag"
+            podman push "$tag"
           done
-
 
   bump-version:
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
