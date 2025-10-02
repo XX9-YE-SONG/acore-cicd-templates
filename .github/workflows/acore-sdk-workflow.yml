@@ -108,7 +108,7 @@ jobs:
       IMAGE_REPO: ${{ github.repository_owner }}/acore-sdk-test
     name: Push image to GHCR
     runs-on: ubuntu-24.04
-    needs: [build-and-scan-prod]
+    needs: [determine-version, build-and-scan-prod]
     permissions:
       contents: read
       packages: write
