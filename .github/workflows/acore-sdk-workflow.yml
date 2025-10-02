@@ -51,9 +51,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Podman
-        uses: redhat-actions/setup-podman@v2
-
       - name: Compute full image name (lowercase)
         id: name
         shell: bash
