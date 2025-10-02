@@ -63,10 +63,6 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ steps.name.outputs.image }}
-          tags: |
-            type=sha
-            type=raw,value=latest
-            type=raw,value=${{ needs.determine-version.outputs.new_version }}
           labels: |
             org.opencontainers.image.version=${{ needs.determine-version.outputs.new_version }}
 
@@ -138,7 +134,7 @@ jobs:
           tags: |
             type=sha
             type=raw,value=latest
-            type=ref,event=tag
+            type=raw,value=${{ needs.determine-version.outputs.new_version }}
 
       - name: Podman login to GHCR
         uses: redhat-actions/podman-login@v1
